@@ -3,6 +3,7 @@ import {
   PutItemCommand,
   GetItemCommand,
   DeleteItemCommand,
+  QueryCommand,
   QueryCommand
 } from '@aws-sdk/client-dynamodb';
 
@@ -81,6 +82,22 @@ export async function getTransaction(id: string): Promise<AuthorizationTransacti
   }
 
   return transaction;
+}
+
+export async function findTransactionByNotionState(state: string): Promise<AuthorizationTransaction | undefined> {
+  const result = await client.send(new QueryCommand({
+    TableName: tableName,
+    IndexName: 'notionState-index',
+    KeyConditionExpression: 'notionState = :state',
+    ExpressionAttributeValues: {
+      ':state': { S: state }
+    },
+    Limit: 1
+  }));
+
+  const item = result.Items?.[0];
+  if (!item?.id?.S) return undefined;
+  return getTransaction(item.id.S);
 }
 
 export async function findTransactionByNotionState(state: string): Promise<AuthorizationTransaction | undefined> {
