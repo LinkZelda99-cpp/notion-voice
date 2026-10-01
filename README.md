@@ -4,7 +4,7 @@ Control your Notion workspace with voice through Amazon Alexa.
 
 ## Current status
 
-This repository is the initial Alexa skill skeleton.
+This repository is the initial working prototype, including the Alexa skill, Notion API client, and AWS-hosted OAuth account-linking service.
 
 The first goal is intentionally small:
 
@@ -69,7 +69,7 @@ npm run build
 
 Create a **Custom** Alexa skill and use the interaction model in `models/en-US.json`.
 
-Amazon's current documentation recommends the authorization-code OAuth flow for account linking. The account-linking authorization server is not implemented yet; the current `NotionAuth` class is the skill-side boundary that will consume the resulting Alexa access token.
+Amazon's current documentation recommends the authorization-code OAuth flow for account linking. The account-linking authorization server is implemented in `src/oauthLambda.ts`; the current `NotionAuth` class consumes the resulting Alexa access token.
 
 ## Environment
 
