@@ -1,0 +1,37 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "notion voice",
+      "intents": [
+        {
+          "name": "AddToNotionIntent",
+          "slots": [
+            {
+              "name": "text",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "add {text} to Notion",
+            "add {text}",
+            "put {text} in Notion",
+            "remember {text}",
+            "remember {text} in Notion"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        }
+      ]
+    }
+  }
+}
