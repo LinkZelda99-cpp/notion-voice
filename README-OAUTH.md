@@ -87,4 +87,4 @@ Register the Amazon-provided Alexa redirect URLs exactly as shown in the console
 
 The repository intentionally keeps the OAuth server separate from the Alexa skill Lambda. The OAuth service returns the Notion OAuth token directly as Alexa's access token, so the existing `NotionAuth` + `NotionClient` code can consume it without another proxy layer.
 
-Before deployment, add the DynamoDB GSI implementation in `src/oauthStore.ts` and wire the API Gateway routes. The current callback function fails closed rather than performing an unsafe table scan.
+DynamoDB should have a GSI named `notionState-index` with `notionState` as its partition key. API Gateway should route `/oauth/authorize`, `/oauth/token`, and `/oauth/notion/callback` to the OAuth Lambda. The Lambda can then be deployed independently from the Alexa skill Lambda.
