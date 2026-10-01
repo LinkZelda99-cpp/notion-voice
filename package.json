@@ -1,0 +1,27 @@
+{
+  "name": "notion-voice",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Control your Notion workspace with voice through Amazon Alexa.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LinkZelda99-cpp/notion-voice.git"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/lambda.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/lambda.js",
+    "check-types": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@notionhq/client": "^5.26.0",
+    "ask-sdk-core": "^2.14.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.158",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.1",
+    "typescript": "^6.0.3"
+  }
+}
