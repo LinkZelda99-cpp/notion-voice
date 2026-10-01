@@ -3,7 +3,8 @@ import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import {
   deleteTransaction,
   getTransaction,
-  putTransaction
+  putTransaction,
+  findTransactionByNotionState
 } from './oauthStore.js';
 
 const NOTION_AUTHORIZE_URL = 'https://api.notion.com/v1/oauth/authorize';
@@ -106,11 +107,7 @@ async function notionCallback(params: URLSearchParams) {
     return html('<h1>Notion authorization failed.</h1>');
   }
 
-  // Find the transaction by the Notion state. For production, use a GSI
-  // on notionState so this lookup stays indexed and does not require a scan.
-  // The initial implementation keeps this lookup isolated here so the
-  // storage strategy can evolve without changing the OAuth contract.
-  const transaction = await findByNotionState(notionState);
+  const transaction = await findTransactionByNotionState(notionState);
   if (!transaction) {
     return html('<h1>This authorization request has expired.</h1>');
   }
@@ -135,6 +132,7 @@ async function notionCallback(params: URLSearchParams) {
   const tokens = await response.json() as {
     access_token?: string;
     refresh_token?: string;
+    expires_in?: number;
   };
 
   if (!tokens.access_token) {
@@ -257,11 +255,6 @@ async function token(params: URLSearchParams, authorization: string | null) {
   return json(400, { error: 'unsupported_grant_type' });
 }
 
-async function findByNotionState(state: string) {
-  // This is intentionally a placeholder until the DynamoDB GSI is added.
-  // It prevents pretending that a table scan is production-ready.
-  throw new Error(`DynamoDB GSI lookup for notionState is not configured: ${state}`);
-}
 
 export const handler: Handler = async (event) => {
   const path = event.rawPath ?? event.path ?? '';
