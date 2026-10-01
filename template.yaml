@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Notion Voice Alexa skill and OAuth service.
+
+Parameters:
+  AlexaClientId:
+    Type: String
+    NoEcho: true
+  AlexaClientSecret:
+    Type: String
+    NoEcho: true
+  NotionClientId:
+    Type: String
+    NoEcho: true
+  NotionClientSecret:
+    Type: String
+    NoEcho: true
+  NotionRedirectUri:
+    Type: String
+  NotionDefaultPageId:
+    Type: String
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 15
+    MemorySize: 256
+
+Resources:
+  OAuthTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: notionState
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: notionState-index
+          KeySchema:
+            - AttributeName: notionState
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+
+  SkillFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: dist/lambda.handler
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Environment:
+        Variables:
+          NOTION_DEFAULT_PAGE_ID: !Ref NotionDefaultPageId
+
+  OAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: dist/oauthLambda.handler
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt OAuthTable.Arn
+                - !Sub '${OAuthTable.Arn}/index/notionState-index'
+      Environment:
+        Variables:
+          OAUTH_TABLE_NAME: !Ref OAuthTable
+          ALEXA_CLIENT_ID: !Ref AlexaClientId
+          ALEXA_CLIENT_SECRET: !Ref AlexaClientSecret
+          NOTION_CLIENT_ID: !Ref NotionClientId
+          NOTION_CLIENT_SECRET: !Ref NotionClientSecret
+          NOTION_REDIRECT_URI: !Ref NotionRedirectUri
+      Events:
+        Authorize:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref OAuthHttpApi
+            Path: /oauth/authorize
+            Method: GET
+        Token:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref OAuthHttpApi
+            Path: /oauth/token
+            Method: POST
+        NotionCallback:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref OAuthHttpApi
+            Path: /oauth/notion/callback
+            Method: GET
+
+  OAuthHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+
+Outputs:
+  OAuthApiUrl:
+    Description: Base URL for the OAuth API
+    Value: !Sub 'https://${OAuthHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+  OAuthAuthorizeUrl:
+    Description: Alexa Account Linking authorization URL
+    Value: !Sub 'https://${OAuthHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/oauth/authorize'
+  OAuthTokenUrl:
+    Description: Alexa Account Linking token URL
+    Value: !Sub 'https://${OAuthHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/oauth/token'
+  NotionCallbackUrl:
+    Description: Notion OAuth redirect URL
+    Value: !Sub 'https://${OAuthHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/oauth/notion/callback'
+  SkillFunctionArn:
+    Description: Alexa skill Lambda ARN
+    Value: !GetAtt SkillFunction.Arn
