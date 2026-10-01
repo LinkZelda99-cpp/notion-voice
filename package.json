@@ -8,7 +8,7 @@
     "url": "https://github.com/LinkZelda99-cpp/notion-voice.git"
   },
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/lambda.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/lambda.js",
+    "build": "tsc --noEmit && esbuild src/lambda.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/lambda.js && esbuild src/oauthLambda.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/oauthLambda.js",
     "check-types": "tsc --noEmit"
   },
   "engines": {
@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@notionhq/client": "^5.26.0",
-    "ask-sdk-core": "^2.14.0"
+    "ask-sdk-core": "^2.14.0",
+    "@aws-sdk/client-dynamodb": "^3.900.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.158",
